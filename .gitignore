@@ -1,17 +1,29 @@
-# Maven
-target/
-.mvn/wrapper/maven-wrapper.jar
+### Java ###
+*.class
+*.jar
+*.war
+*.ear
 
-# IDE
+### Maven ###
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+
+### IDE ###
 .idea/
 *.iws
 *.iml
 *.ipr
 .vscode/
+.settings/
+bin/
 
-# OS
+### OS ###
 .DS_Store
 Thumbs.db
 
-# Build
-build/
+### Logs ###
+logs/
+*.log
