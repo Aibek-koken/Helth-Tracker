@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Tracker</title>
+    <link rel="stylesheet" href="/main.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+<!-- Header -->
+<header class="header">
+    <div class="logo">
+        <i class="fas fa-heartbeat"></i>
+        HealthTracker
+    </div>
+    <nav class="nav-container">
+        <button class="nav-item active" data-page="tracker">
+            <i class="fas fa-chart-line"></i>
+            Tracker
+        </button>
+        <button class="nav-item" data-page="posts">
+            <i class="fas fa-users"></i>
+            Community
+        </button>
+        <button class="nav-item" data-page="profile">
+            <i class="fas fa-user"></i>
+            Profile
+        </button>
+        <button class="nav-item logout-btn" id="logoutBtn">
+            <i class="fas fa-sign-out-alt"></i>
+            Logout
+        </button>
+    </nav>
+</header>
+
+<!-- Main Content Area -->
+<main class="main-content">
+    <!-- Tracker Page (Default) -->
+    <div class="page active" id="tracker-page">
+        <!-- Welcome Section -->
+        <div class="welcome-section">
+            <h1>Welcome back, <span id="userGreeting">User</span>! 👋</h1>
+            <p>Track your daily habits and build a healthier lifestyle</p>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-cards">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-fire"></i>
+                </div>
+                <div class="stat-info">
+                    <div class="stat-value" id="currentStreak">0</div>
+                    <div class="stat-label">Current Streak</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-info">
+                    <div class="stat-value" id="completedToday">0/0</div>
+                    <div class="stat-label">Completed Today</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-trophy"></i>
+                </div>
+                <div class="stat-info">
+                    <div class="stat-value" id="completionRate">0%</div>
+                    <div class="stat-label">Success Rate</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Habit Form -->
+        <div class="add-habit-form">
+            <div class="form-header">
+                <h3><i class="fas fa-plus-circle"></i> Add New Habit</h3>
+            </div>
+            <div class="habit-input-container">
+                <input type="text" class="habit-input" id="habitInput" placeholder="Enter new habit...">
+                <input type="text" class="habit-input" id="habitDescription" placeholder="Description (optional)">
+                <select class="habit-input" id="habitFrequency">
+                    <option value="DAILY">Daily</option>
+                    <option value="WEEKLY">Weekly</option>
+                    <option value="MONTHLY">Monthly</option>
+                </select>
+                <button class="add-habit-btn" id="addHabitBtn">
+                    <i class="fas fa-plus"></i> Add Habit
+                </button>
+            </div>
+        </div>
+
+        <!-- View Selector -->
+        <div class="dropdown-container">
+            <div style="position: relative;">
+                <button class="dropdown-button" id="dropdownButton">
+                    <i class="fas fa-calendar-alt"></i>
+                    Today
+                </button>
+                <div class="dropdown-menu" id="dropdownMenu">
+                    <button class="dropdown-item" data-view="today">
+                        <i class="fas fa-sun"></i> Today
+                    </button>
+                    <button class="dropdown-item" data-view="week">
+                        <i class="fas fa-calendar-week"></i> This Week
+                    </button>
+                    <button class="dropdown-item" data-view="month">
+                        <i class="fas fa-calendar"></i> This Month
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Today View -->
+        <div class="today-container view-container active" id="todayView">
+            <div class="habits-container">
+                <div class="section-header">
+                    <h3><i class="fas fa-tasks"></i> Today's Habits</h3>
+                    <span class="habits-count" id="habitsCount">0 habits</span>
+                </div>
+                <div class="habits-list" id="habitsList">
+                    <div class="empty-state">
+                        <i class="fas fa-clipboard-list"></i>
+                        <p>No habits yet. Add your first habit above!</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="progress-chart">
+                <div class="progress-header">
+                    <h3><i class="fas fa-chart-pie"></i> Today's Progress</h3>
+                </div>
+                <div class="progress-visual">
+                    <div class="progress-circle">
+                        <svg width="120" height="120" viewBox="0 0 120 120">
+                            <circle cx="60" cy="60" r="54" fill="none" stroke="#e0e0e0" stroke-width="8"/>
+                            <circle cx="60" cy="60" r="54" fill="none" stroke="#1976d2" stroke-width="8"
+                                    stroke-linecap="round" id="progressCircle" transform="rotate(-90 60 60)"/>
+                        </svg>
+                        <div class="progress-text">
+                            <div class="progress-percent" id="progressPercent">0%</div>
+                            <div class="progress-label">Completed</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="stats">
+                    <div class="stat-item">
+                        <span class="stat-number" id="totalHabits">0</span>
+                        <span class="stat-label">Total Habits</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number" id="completedHabits">0</span>
+                        <span class="stat-label">Completed</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Week Table -->
+        <div class="week-table-container view-container" id="weekView">
+            <div class="section-header">
+                <h3><i class="fas fa-calendar-week"></i> Weekly Overview</h3>
+            </div>
+            <table class="habits-table" id="weekTable">
+                <thead>
+                <tr>
+                    <th>Habits</th>
+                    <th>Mon</th>
+                    <th>Tue</th>
+                    <th>Wed</th>
+                    <th>Thu</th>
+                    <th>Fri</th>
+                    <th>Sat</th>
+                    <th>Sun</th>
+                </tr>
+                </thead>
+                <tbody id="weekTableBody">
+                <!-- Rows will be added dynamically -->
+                </tbody>
+            </table>
+        </div>
+        <!-- Month View -->
+        <div class="month-container view-container" id="monthView">
+            <div class="section-header">
+                <h3><i class="fas fa-calendar"></i> Monthly Overview - <span id="currentMonthYear">November 2024</span></h3>
+                <div class="month-navigation">
+                    <button class="btn-secondary" onclick="changeMonth(-1)">
+                        <i class="fas fa-chevron-left"></i> Prev
+                    </button>
+                    <button class="btn-secondary" onclick="changeMonth(1)">
+                        Next <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Monthly Stats -->
+            <div class="monthly-stats">
+                <div class="month-stat-card">
+                    <div class="month-stat-icon">
+                        <i class="fas fa-fire"></i>
+                    </div>
+                    <div class="month-stat-info">
+                        <div class="month-stat-value" id="monthCurrentStreak">0</div>
+                        <div class="month-stat-label">Current Streak</div>
+                    </div>
+                </div>
+                <div class="month-stat-card">
+                    <div class="month-stat-icon">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <div class="month-stat-info">
+                        <div class="month-stat-value" id="monthBestStreak">0</div>
+                        <div class="month-stat-label">Best Streak</div>
+                    </div>
+                </div>
+                <div class="month-stat-card">
+                    <div class="month-stat-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="month-stat-info">
+                        <div class="month-stat-value" id="monthCompletionRate">0%</div>
+                        <div class="month-stat-label">Completion Rate</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Month Content -->
+            <div class="month-main-content">
+                <!-- Habits Completion Table (Left) -->
+                <div class="completion-section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-list-check"></i> Daily Completion</h3>
+                    </div>
+                    <div class="completion-grid" id="completionGrid">
+                        <!-- Completion grid will be generated here -->
+                    </div>
+                </div>
+
+                <!-- Calendar (Right) -->
+                <div class="calendar-section">
+                    <div class="calendar-container">
+                        <div class="calendar-header">
+                            <div class="week-days">
+                                <div class="week-day">Mon</div>
+                                <div class="week-day">Tue</div>
+                                <div class="week-day">Wed</div>
+                                <div class="week-day">Thu</div>
+                                <div class="week-day">Fri</div>
+                                <div class="week-day">Sat</div>
+                                <div class="week-day">Sun</div>
+                            </div>
+                        </div>
+                        <div class="calendar-grid" id="calendarGrid">
+                            <!-- Calendar days will be generated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sleep Timeline -->
+        <div class="sleep-timeline">
+            <div class="section-header">
+                <h3><i class="fas fa-moon"></i> Sleep Tracking</h3>
+            </div>
+            <div class="sleep-display">
+                <div class="sleep-time">
+                    <div class="time-box">
+                        <label>Bedtime</label>
+                        <div class="time-value" id="bedtime">22:00</div>
+                    </div>
+                    <div class="time-separator">
+                        <i class="fas fa-moon"></i>
+                    </div>
+                    <div class="time-box">
+                        <label>Wake up</label>
+                        <div class="time-value" id="waketime">07:00</div>
+                    </div>
+                </div>
+                <div class="sleep-duration">
+                    <span id="sleepDuration">9h 0m</span>
+                    <span>sleep</span>
+                </div>
+            </div>
+            <div class="timeline-container" id="timeline">
+                <div class="timeline-labels">
+                    <span>20:00</span>
+                    <span>00:00</span>
+                    <span>04:00</span>
+                    <span>08:00</span>
+                </div>
+                <div class="timeline-track" id="timelineTrack">
+                    <div class="timeline-selection" id="timelineSelection"></div>
+                    <div class="timeline-handle start-handle" id="startHandle"></div>
+                    <div class="timeline-handle end-handle" id="endHandle"></div>
+                </div>
+            </div>
+            <div class="timeline-hours">
+                <span>00:00</span>
+                <span>06:00</span>
+                <span>12:00</span>
+                <span>18:00</span>
+                <span>23:59</span>
+            </div>
+            <button class="save-sleep-btn" id="saveSleepBtn">
+                <i class="fas fa-save"></i> Save Sleep Time
+            </button>
+        </div>
+    </div>
+
+    <!-- Posts Page -->
+    <div class="page" id="posts-page">
+        <div class="posts-container">
+            <h2>Community Posts</h2>
+            <div class="posts-list" id="postsList">
+                <div class="loading">Loading posts...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Page -->
+    <div class="page" id="profile-page">
+        <div class="profile-container">
+            <h2>User Profile</h2>
+            <div class="profile-info">
+                <div class="info-item">
+                    <label>Username:</label>
+                    <span id="profileUsername">Loading...</span>
+                </div>
+                <div class="info-item">
+                    <label>Email:</label>
+                    <span id="profileEmail">Loading...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script src="/main.js"></script>
+</body>
+</html>
