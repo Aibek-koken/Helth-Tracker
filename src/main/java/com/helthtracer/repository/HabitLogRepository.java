@@ -1,6 +1,5 @@
 package com.helthtracer.repository;
 
-
 import com.helthtracer.model.HabitLog;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -16,8 +15,11 @@ public interface HabitLogRepository extends JpaRepository<HabitLog, Long> {
                                       @Param("start") LocalDate start,
                                       @Param("end") LocalDate end);
 
-    // ДОБАВИТЬ эти методы (они используются в HabitLogController)
-    List<HabitLog> findByHabitUserIdAndDateBetween(Long userId, LocalDate startDate, LocalDate endDate);
+    // ИСПРАВИТЬ сигнатуру метода - добавить @Param
+    @Query("SELECT hl FROM HabitLog hl WHERE hl.habit.user.id = :userId AND hl.date BETWEEN :startDate AND :endDate")
+    List<HabitLog> findByHabitUserIdAndDateBetween(@Param("userId") Long userId,
+                                                   @Param("startDate") LocalDate startDate,
+                                                   @Param("endDate") LocalDate endDate);
 
     List<HabitLog> findByHabitIdAndDate(Long habitId, LocalDate date);
 
