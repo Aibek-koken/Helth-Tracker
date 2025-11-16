@@ -325,15 +325,73 @@
     <!-- Profile Page -->
     <div class="page" id="profile-page">
         <div class="profile-container">
-            <h2>User Profile</h2>
-            <div class="profile-info">
-                <div class="info-item">
-                    <label>Username:</label>
-                    <span id="profileUsername">Loading...</span>
+            <div class="profile-card">
+                <div class="profile-header">
+                    <div class="profile-avatar" id="userAvatar">U</div>
+                    <div class="profile-name" id="userName">User Name</div>
+                    <div class="profile-email" id="userEmail">user@example.com</div>
                 </div>
-                <div class="info-item">
-                    <label>Email:</label>
-                    <span id="profileEmail">Loading...</span>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="profileCurrentStreak">0</div>
+                        <div class="stat-label">Current Streak</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="profileTotalHabits">0</div>
+                        <div class="stat-label">Total Habits</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="profileCompletionRate">0%</div>
+                        <div class="stat-label">Completion Rate</div>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <div class="settings-title">Notifications</div>
+                    <div class="settings-group">
+                        <div class="setting-item">
+                            <span class="setting-label">Habit Reminders</span>
+                            <label class="switch">
+                                <input type="checkbox" id="habitReminders" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <span class="setting-label">Weekly Reports</span>
+                            <label class="switch">
+                                <input type="checkbox" id="weeklyReports" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <span class="setting-label">Goal Achievements</span>
+                            <label class="switch">
+                                <input type="checkbox" id="goalAchievements">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <div class="settings-title">Privacy</div>
+                    <div class="settings-group">
+                        <div class="setting-item">
+                            <span class="setting-label">Public Profile</span>
+                            <label class="switch">
+                                <input type="checkbox" id="publicProfile">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <span class="setting-label">Share Progress</span>
+                            <label class="switch">
+                                <input type="checkbox" id="shareProgress" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
