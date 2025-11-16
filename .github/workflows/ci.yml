@@ -62,10 +62,16 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: Install Heroku CLI
+        run: |
+          curl https://cli-assets.heroku.com/install.sh | sh
+
+      - name: Build package
+        run: mvn -B clean package -DskipTests
+
       - name: Deploy to Heroku
-        uses: akhileshns/heroku-deploy@v3.12.12
-        with:
-          heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
-          heroku_app_name: ${{ secrets.HEROKU_APP_NAME }}
-          heroku_email: ${{ secrets.HEROKU_EMAIL }}
-          usedocker: false
+        run: |
+          heroku plugins:install java
+          heroku deploy:jar target/helth-tracer-0.0.1-SNAPSHOT.jar --app ${{ secrets.HEROKU_APP_NAME }}
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
