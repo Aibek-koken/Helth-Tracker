@@ -66,12 +66,13 @@ jobs:
         run: |
           curl https://cli-assets.heroku.com/install.sh | sh
 
+      - name: Install Heroku Java plugin
+        run: heroku plugins:install java
+
       - name: Build package
         run: mvn -B clean package -DskipTests
 
       - name: Deploy to Heroku
-        run: |
-          heroku plugins:install java
-          heroku deploy:jar target/helth-tracer-0.0.1-SNAPSHOT.jar --app ${{ secrets.HEROKU_APP_NAME }}
+        run: heroku deploy:jar target/*.jar --app ${{ secrets.HEROKU_APP_NAME }}
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
