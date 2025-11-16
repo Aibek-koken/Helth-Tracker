@@ -1,0 +1,1 @@
+web: java -jar target/helth-tracer-0.0.1-SNAPSHOT.jar
