@@ -6,7 +6,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
-
+// d
     @Override
     public void addViewControllers(ViewControllerRegistry registry) {
         // Redirect root to login page
