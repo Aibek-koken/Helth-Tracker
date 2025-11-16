@@ -33,6 +33,8 @@ public class HabitController {
     }
     @PostMapping
     public Habit createHabit(@RequestBody Habit habit) {
+        System.out.println("Creating habit: " + habit.getTitle());
+        System.out.println("User ID: " + (habit.getUser() != null ? habit.getUser().getId() : "null"));
         // Проверяем, что пользователь установлен
         if (habit.getUser() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User is required");

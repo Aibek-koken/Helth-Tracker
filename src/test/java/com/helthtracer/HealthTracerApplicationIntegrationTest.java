@@ -7,7 +7,8 @@ import org.springframework.context.ApplicationContext;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-@SpringBootTest
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+
 public class HealthTracerApplicationIntegrationTest {
 
     @Autowired
@@ -22,7 +23,7 @@ public class HealthTracerApplicationIntegrationTest {
     @Test
     void mainApplicationStarts() {
         // Проверяем что основное приложение запускается
-        HelthTracerApplication.main(new String[]{});
+        HealthTracerApplication.main(new String[]{});
         assertNotNull(applicationContext);
     }
 }
