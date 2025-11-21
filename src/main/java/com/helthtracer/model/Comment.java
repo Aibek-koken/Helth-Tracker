@@ -1,6 +1,7 @@
 package com.helthtracer.model;
 
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "comments")
@@ -10,18 +11,19 @@ public class Comment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // 🔗 связь с постом
     @ManyToOne
     @JoinColumn(name = "post_id", nullable = false)
     private Post post;
 
-    // 🔗 связь с пользователем
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @Column(columnDefinition = "TEXT", nullable = false)
     private String body;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
 
     // --- Конструкторы ---
     public Comment() {}
@@ -30,6 +32,7 @@ public class Comment {
         this.post = post;
         this.user = user;
         this.body = body;
+        this.createdAt = LocalDateTime.now();
     }
 
     // --- Геттеры и сеттеры ---
@@ -63,5 +66,13 @@ public class Comment {
 
     public void setBody(String body) {
         this.body = body;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 }

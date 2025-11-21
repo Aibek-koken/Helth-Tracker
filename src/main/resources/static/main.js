@@ -226,6 +226,13 @@ function setupEventListeners() {
     const addBtn = document.getElementById('addHabitBtn');
     const habitInput = document.getElementById('habitInput');
 
+
+    // Add post
+    const addPostBtn = document.getElementById('addPostBtn');
+    if (addPostBtn) {
+        addPostBtn.addEventListener('click', addNewPost);
+    }
+
     addBtn.addEventListener('click', addNewHabit);
     habitInput.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') addNewHabit();
@@ -838,3 +845,362 @@ window.toggleHabitCompletion = toggleHabitCompletion;
 window.changeMonth = changeMonth;
 window.toggleDayCompletion = toggleDayCompletion;
 window.toggleHabitDayCompletion = toggleHabitDayCompletion;
+
+// Community functionality
+let posts = [];
+let postStats = {};
+
+// Load posts from backend
+async function loadPosts() {
+    try {
+        posts = await apiService.request('/posts');
+        await loadPostsStats();
+        renderPosts();
+    } catch (error) {
+        console.error('Failed to load posts:', error);
+        // For demo, load some sample posts
+        loadDemoPosts();
+    }
+}
+
+async function loadPostsStats() {
+    for (const post of posts) {
+        try {
+            const stats = await apiService.request(`/posts/${post.id}/stats`);
+            postStats[post.id] = stats;
+
+            // Check if current user liked this post
+            const likeCheck = await apiService.request(`/likes/check?postId=${post.id}&userId=${currentUser.id}`);
+            post.likedByCurrentUser = likeCheck.liked;
+        } catch (error) {
+            console.error(`Failed to load stats for post ${post.id}:`, error);
+            postStats[post.id] = { likeCount: 0, commentCount: 0 };
+            post.likedByCurrentUser = false;
+        }
+    }
+}
+
+function loadDemoPosts() {
+    posts = [
+        {
+            id: 1,
+            title: "30 Days of Meditation",
+            body: "Just completed 30 days of daily meditation! Started with just 5 minutes and now up to 20 minutes. The mental clarity is amazing! 🧘‍♂️",
+            topic: "mental",
+            user: { username: "MindfulMax", id: 2 },
+            createdAt: "2024-01-15T08:00:00",
+            likedByCurrentUser: false
+        },
+        {
+            id: 2,
+            title: "Meal Prep Sunday Success",
+            body: "Spent 2 hours on Sunday preparing healthy lunches for the week. Chicken, quinoa, and roasted veggies! So worth it for staying on track during busy weekdays. 🥗",
+            topic: "nutrition",
+            user: { username: "HealthyHannah", id: 3 },
+            createdAt: "2024-01-14T18:30:00",
+            likedByCurrentUser: true
+        }
+    ];
+
+    postStats = {
+        1: { likeCount: 12, commentCount: 3 },
+        2: { likeCount: 24, commentCount: 7 }
+    };
+
+    renderPosts();
+}
+
+function renderPosts() {
+    const postsFeed = document.getElementById('postsFeed');
+    if (!postsFeed) return;
+
+    if (posts.length === 0) {
+        postsFeed.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-comments"></i>
+                <p>No posts yet. Be the first to share your achievement!</p>
+            </div>
+        `;
+        return;
+    }
+
+    postsFeed.innerHTML = posts.map(post => {
+        const stats = postStats[post.id] || { likeCount: 0, commentCount: 0 };
+        const postDate = new Date(post.createdAt).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
+        return `
+        <div class="post-card" data-post-id="${post.id}">
+            <div class="post-header">
+                <div class="post-category ${post.topic}">${getCategoryDisplayName(post.topic)}</div>
+            </div>
+            <div class="post-title">${post.title}</div>
+            <div class="post-content">${post.body}</div>
+            <div class="post-meta">
+                <div class="post-author">
+                    <i class="fas fa-user"></i>
+                    ${post.user.username}
+                </div>
+                <div class="post-date">
+                    <i class="fas fa-clock"></i>
+                    ${postDate}
+                </div>
+            </div>
+            <div class="post-actions">
+                <button class="action-btn like-btn ${post.likedByCurrentUser ? 'active' : ''}" 
+                        onclick="toggleLike(${post.id})">
+                    <i class="${post.likedByCurrentUser ? 'fas' : 'far'} fa-heart"></i>
+                    <span class="like-count">${stats.likeCount}</span>
+                </button>
+                <button class="action-btn comment-btn" onclick="toggleComments(${post.id})">
+                    <i class="far fa-comment"></i>
+                    <span class="comment-count">${stats.commentCount}</span>
+                </button>
+            </div>
+            <div class="comments-section" id="comments-${post.id}" style="display: none;">
+                <div class="comments-list" id="comments-list-${post.id}">
+                    <div class="no-comments">Loading comments...</div>
+                </div>
+                <div class="add-comment">
+                    <input type="text" class="comment-input" id="comment-input-${post.id}" 
+                           placeholder="Add a comment..." onkeypress="handleCommentKeypress(event, ${post.id})">
+                    <button class="add-comment-btn" onclick="addComment(${post.id})">
+                        <i class="fas fa-paper-plane"></i> Post
+                    </button>
+                </div>
+            </div>
+        </div>
+        `;
+    }).join('');
+
+    // Update posts count
+    document.getElementById('postsCount').textContent = `${posts.length} posts`;
+}
+
+function getCategoryDisplayName(topic) {
+    const categories = {
+        fitness: "🏃 Fitness & Sport",
+        nutrition: "🥗 Nutrition",
+        sleep: "😴 Sleep & Rest",
+        mental: "🧠 Mental Health",
+        other: "💭 Other"
+    };
+    return categories[topic] || topic;
+}
+
+async function toggleLike(postId) {
+    try {
+        const response = await apiService.request('/likes', {
+            method: 'POST',
+            body: JSON.stringify({
+                postId: postId,
+                userId: currentUser.id
+            })
+        });
+
+        if (response.success) {
+            // Update UI
+            const post = posts.find(p => p.id === postId);
+            const likeBtn = document.querySelector(`.post-card[data-post-id="${postId}"] .like-btn`);
+            const likeIcon = likeBtn.querySelector('i');
+            const likeCount = likeBtn.querySelector('.like-count');
+
+            if (response.liked) {
+                post.likedByCurrentUser = true;
+                likeBtn.classList.add('active');
+                likeIcon.className = 'fas fa-heart';
+                likeCount.textContent = parseInt(likeCount.textContent) + 1;
+            } else {
+                post.likedByCurrentUser = false;
+                likeBtn.classList.remove('active');
+                likeIcon.className = 'far fa-heart';
+                likeCount.textContent = parseInt(likeCount.textContent) - 1;
+            }
+
+            showSuccess(response.message);
+        }
+    } catch (error) {
+        console.error('Failed to toggle like:', error);
+        showError('Failed to update like. Please try again.');
+    }
+}
+
+async function toggleComments(postId) {
+    const commentsSection = document.getElementById(`comments-${postId}`);
+    const isVisible = commentsSection.style.display !== 'none';
+
+    if (!isVisible) {
+        // Load comments for this post
+        await loadComments(postId);
+    }
+
+    commentsSection.style.display = isVisible ? 'none' : 'block';
+}
+
+async function loadComments(postId) {
+    try {
+        const comments = await apiService.request(`/comments/post/${postId}`);
+        renderComments(postId, comments);
+    } catch (error) {
+        console.error('Failed to load comments:', error);
+        renderComments(postId, []);
+    }
+}
+
+function renderComments(postId, comments) {
+    const commentsList = document.getElementById(`comments-list-${postId}`);
+
+    if (comments.length === 0) {
+        commentsList.innerHTML = '<div class="no-comments">No comments yet. Be the first to comment!</div>';
+        return;
+    }
+
+    commentsList.innerHTML = comments.map(comment => {
+        const commentDate = new Date(comment.createdAt).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
+        return `
+        <div class="comment">
+            <div class="comment-header">
+                <div class="comment-author">${comment.user.username}</div>
+                <div class="comment-date">${commentDate}</div>
+            </div>
+            <div class="comment-content">${comment.body}</div>
+        </div>
+        `;
+    }).join('');
+}
+
+function handleCommentKeypress(event, postId) {
+    if (event.key === 'Enter') {
+        addComment(postId);
+    }
+}
+
+async function addComment(postId) {
+    const commentInput = document.getElementById(`comment-input-${postId}`);
+    const content = commentInput.value.trim();
+
+    if (!content) {
+        showError('Please enter a comment');
+        return;
+    }
+
+    const addBtn = document.querySelector(`#comments-${postId} .add-comment-btn`);
+    const originalText = addBtn.innerHTML;
+    addBtn.disabled = true;
+    addBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+    try {
+        const response = await apiService.request('/comments', {
+            method: 'POST',
+            body: JSON.stringify({
+                postId: postId,
+                userId: currentUser.id,
+                content: content
+            })
+        });
+
+        if (response.success) {
+            commentInput.value = '';
+
+            // Update comment count
+            const commentBtn = document.querySelector(`.post-card[data-post-id="${postId}"] .comment-btn`);
+            const commentCount = commentBtn.querySelector('.comment-count');
+            commentCount.textContent = parseInt(commentCount.textContent) + 1;
+
+            // Reload comments to show the new one
+            await loadComments(postId);
+
+            showSuccess('Comment added successfully!');
+        }
+    } catch (error) {
+        console.error('Failed to add comment:', error);
+        showError('Failed to add comment. Please try again.');
+    } finally {
+        addBtn.disabled = false;
+        addBtn.innerHTML = originalText;
+    }
+}
+
+async function addNewPost() {
+    const categorySelect = document.getElementById('postCategory');
+    const titleInput = document.getElementById('postTitle');
+    const contentInput = document.getElementById('postContent');
+
+    const category = categorySelect.value;
+    const title = titleInput.value.trim();
+    const content = contentInput.value.trim();
+
+    if (!title) {
+        showError('Please enter a post title');
+        return;
+    }
+
+    if (!content) {
+        showError('Please enter post content');
+        return;
+    }
+
+    const addBtn = document.getElementById('addPostBtn');
+    addBtn.disabled = true;
+    addBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sharing...';
+
+    try {
+        const response = await apiService.request('/posts', {
+            method: 'POST',
+            body: JSON.stringify({
+                userId: currentUser.id,
+                title: title,
+                content: content,
+                category: category
+            })
+        });
+
+        if (response.success) {
+            // Add new post to the beginning of the list
+            posts.unshift(response.post);
+            postStats[response.post.id] = { likeCount: 0, commentCount: 0 };
+
+            renderPosts();
+
+            // Clear inputs
+            titleInput.value = '';
+            contentInput.value = '';
+
+            showSuccess('Post shared successfully!');
+        }
+    } catch (error) {
+        console.error('Failed to add post:', error);
+        showError('Failed to share post. Please try again.');
+    } finally {
+        addBtn.disabled = false;
+        addBtn.innerHTML = '<i class="fas fa-share"></i> Share with Community';
+    }
+}
+
+// Update showPage function to load posts when community page is shown
+const originalShowPage = window.showPage;
+window.showPage = function(page) {
+    originalShowPage(page);
+
+    if (page === 'posts') {
+        loadPosts();
+    }
+};
+
+// Make functions global
+window.toggleLike = toggleLike;
+window.toggleComments = toggleComments;
+window.addComment = addComment;
+window.handleCommentKeypress = handleCommentKeypress;
+window.addNewPost = addNewPost;
