@@ -41,7 +41,7 @@ jobs:
       - name: Run tests with coverage
         run: mvn -B test
         env:
-          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/test_db
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/health-tracker
           SPRING_DATASOURCE_USERNAME: postgres
           SPRING_DATASOURCE_PASSWORD: postgres
 
