@@ -54,6 +54,34 @@ public class AuthController {
 
         return ResponseEntity.ok(response);
     }
+    @PostMapping("/register")
+    public ResponseEntity<Map<String, Object>> registerUser(@RequestBody User user) {
+        try {
+            // Проверяем, нет ли уже пользователя с таким именем
+            if (userRepository.existsByUsername(user.getUsername())) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "success", false,
+                        "message", "Username already exists"
+                ));
+            }
+
+            // Сохраняем нового пользователя
+            User savedUser = userRepository.save(user);
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "user", Map.of(
+                            "id", savedUser.getId(),
+                            "username", savedUser.getUsername()
+                    )
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "Error: " + e.getMessage()
+            ));
+        }
+    }
 }
 
 class LoginRequest {
