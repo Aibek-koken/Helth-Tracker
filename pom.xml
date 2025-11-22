@@ -8,8 +8,8 @@
 		<version>3.5.7</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>com.helthtracer</groupId>
-	<artifactId>helth-tracer</artifactId>
+	<groupId>com.healthtracker</groupId>
+	<artifactId>health-tracker</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>helth-tracer</name>
 	<description>Demo project for Spring Boot</description>

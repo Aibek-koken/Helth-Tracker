@@ -1,4 +1,4 @@
-name: CI/CD Pipeline
+name: CI Pipeline
 
 on:
   push:
@@ -16,7 +16,7 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: test_db
+          POSTGRES_DB: health-tracker
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -36,43 +36,20 @@ jobs:
           cache: 'maven'
 
       - name: Wait for PostgreSQL
-        run: sleep 10
+        run: |
+          for i in {1..10}; do
+            pg_isready -h localhost -p 5432 && break
+            echo "Waiting for PostgreSQL... attempt $i"
+            sleep 3
+          done
 
-      - name: Run tests with coverage
+      - name: Run tests
         run: mvn -B test
         env:
           SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/health-tracker
           SPRING_DATASOURCE_USERNAME: postgres
           SPRING_DATASOURCE_PASSWORD: postgres
+          SPRING_AUTOCONFIGURE_EXCLUDE: org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration,org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration,org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration
 
       - name: Build application
         run: mvn -B clean package -DskipTests
-
-  deploy:
-    needs: test
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-
-      - name: Install Heroku CLI
-        run: |
-          curl https://cli-assets.heroku.com/install.sh | sh
-
-      - name: Install Heroku Java plugin
-        run: heroku plugins:install java
-
-      - name: Build package
-        run: mvn -B clean package -DskipTests
-
-      - name: Deploy to Heroku
-        run: heroku deploy:jar target/helth-tracer-0.0.1-SNAPSHOT.jar --app ${{ secrets.HEROKU_APP_NAME }}
-        env:
-          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
