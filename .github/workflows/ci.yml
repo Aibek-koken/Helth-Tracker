@@ -20,5 +20,5 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Build application
-        run: mvn -B clean package -DskipTests
+      - name: Build and test application
+        run: mvn -B clean verify
