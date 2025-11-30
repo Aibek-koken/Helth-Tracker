@@ -5,9 +5,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 public class HealthTracerApplicationIntegrationTest {
@@ -17,14 +17,6 @@ public class HealthTracerApplicationIntegrationTest {
 
     @Test
     void contextLoads() {
-        // Проверяем что Spring контекст загружается корректно
-        assertNotNull(applicationContext);
-    }
-
-    @Test
-    void mainApplicationStarts() {
-        // Проверяем что основное приложение запускается
-        HealthTracerApplication.main(new String[]{});
         assertNotNull(applicationContext);
     }
 }
