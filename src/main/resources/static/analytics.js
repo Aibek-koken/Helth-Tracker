@@ -1,552 +1,411 @@
-// Analytics Dashboard
-console.log('Analytics Dashboard started');
+// analytics.js (fixed) - Robust date handling, correct checkbox mapping, stable stats rendering
+console.log('Analytics Dashboard (fixed) started');
 
-// Configuration
 const API_BASE_URL = '/api';
 let currentUser = JSON.parse(localStorage.getItem('currentUser'));
 
-// Global state
 let habits = [];
-let monthlyCompletions = JSON.parse(localStorage.getItem('monthlyCompletions')) || {};
+let habitLogs = []; // array of objects { habit: {id}, date: "YYYY-MM-DD", status: "COMPLETED" }
 
-// Monthly View Data
 let currentMonth = new Date().getMonth();
 let currentYear = new Date().getFullYear();
 
-// Check authentication
 if (!currentUser) {
     window.location.href = '/login.html';
 }
 
-// API Service (same as main.js)
+/* ---------- Helpers: date formatting / normalization ---------- */
+
+// Return YYYY-MM-DD for Date object or accepted strings.
+// If input is already "YYYY-MM-DD" return as-is.
+function formatDateForAPI(dateInput) {
+    if (!dateInput) return null;
+
+    // If it's already a YYYY-MM-DD string
+    if (typeof dateInput === 'string') {
+        // If contains T (datetime) -> split
+        if (/^\d{4}-\d{2}-\d{2}T/.test(dateInput)) {
+            return dateInput.split('T')[0];
+        }
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dateInput)) {
+            return dateInput;
+        }
+        // If it's some other string, try to parse
+        const parsed = new Date(dateInput);
+        if (!isNaN(parsed)) {
+            return parsed.toISOString().split('T')[0];
+        }
+        return null;
+    }
+
+    // Date object
+    if (dateInput instanceof Date) {
+        // Use local date (avoid timezone shifts): build from components
+        const y = dateInput.getFullYear();
+        const m = String(dateInput.getMonth() + 1).padStart(2, '0');
+        const d = String(dateInput.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    }
+
+    return null;
+}
+
+// Clean string like "2024-12-02T00:00:00" -> "2024-12-02"
+function cleanDateStr(s) {
+    if (!s) return null;
+    if (typeof s !== 'string') return formatDateForAPI(s);
+    return s.split('T')[0];
+}
+
+/* ---------- API service ---------- */
 const apiService = {
     async request(endpoint, options = {}) {
         try {
             const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...options.headers,
-                },
+                headers: { 'Content-Type': 'application/json', ...options.headers },
                 ...options
             });
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
+            if (response.status === 204) return { success: true };
 
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             return await response.json();
-        } catch (error) {
-            console.error('API request failed:', error);
-            throw error;
+        } catch (e) {
+            console.error('API request failed', e);
+            throw e;
         }
     },
-
     async getHabits() {
-        if (!currentUser || !currentUser.id) {
-            throw new Error('User not authenticated');
-        }
+        if (!currentUser || !currentUser.id) throw new Error('User not authenticated');
         return this.request(`/habits/user/${currentUser.id}`);
     },
-
     async getHabitLogs(year, month) {
-        if (!currentUser || !currentUser.id) {
-            throw new Error('User not authenticated');
-        }
+        if (!currentUser || !currentUser.id) throw new Error('User not authenticated');
         return this.request(`/habit-logs?user_id=${currentUser.id}&year=${year}&month=${month}`);
     },
-
     async saveHabitLog(habitLogData) {
         return this.request('/habit-logs', {
             method: 'POST',
             body: JSON.stringify(habitLogData)
         });
     },
-
     async deleteHabitLog(habitId, date) {
-        const response = await fetch(`${API_BASE_URL}/habit-logs?habit_id=${habitId}&date=${date}`, {
+        const dateStr = typeof date === 'string' ? date : formatDateForAPI(date);
+        return this.request(`/habit-logs?habit_id=${habitId}&date=${dateStr}`, {
             method: 'DELETE'
         });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        if (response.status === 204 || response.headers.get('content-length') === '0') {
-            return { success: true };
-        }
-
-        return await response.json();
+    },
+    async getUserStats() {
+        if (!currentUser || !currentUser.id) throw new Error('User not authenticated');
+        return this.request(`/users/${currentUser.id}/stats`);
     }
 };
 
-// Initialize application
-document.addEventListener('DOMContentLoaded', function() {
-    initializeAnalytics();
-});
+/* ---------- Init ---------- */
+document.addEventListener('DOMContentLoaded', initializeAnalytics);
 
 async function initializeAnalytics() {
-    console.log('Initializing analytics...');
-
     try {
         await loadHabits();
+        await loadHabitLogsForCurrentMonth();
+        await loadUserStats();
         setupEventListeners();
-
-        // Initialize monthly data
-        initializeMonthlyData();
-
-        // Load initial view
-        showTab('week');
-        updateStatsSummary();
-
-        console.log('Analytics initialized successfully!');
-    } catch (error) {
-        console.error('Failed to initialize analytics:', error);
-        showError('Failed to load analytics data.');
+        renderWeekView();
+        renderMonthView();
+        console.log('Analytics initialized');
+    } catch (e) {
+        console.error('Analytics init failed', e);
+        showError('Failed to load analytics. Using demo data.');
         loadDemoData();
     }
 }
 
+/* ---------- Loaders ---------- */
+
 async function loadHabits() {
     try {
         habits = await apiService.getHabits();
-        await loadHabitLogsForCurrentMonth();
-        renderWeekView();
-        updateMonthView();
-    } catch (error) {
-        console.error('Failed to load habits:', error);
-        throw error;
+        console.log('Loaded habits', habits);
+    } catch (e) {
+        console.error('Failed to load habits', e);
+        throw e;
     }
 }
 
+async function loadHabitLogsForCurrentMonth() {
+    try {
+        // backend expects month as 1-based
+        const res = await apiService.getHabitLogs(currentYear, currentMonth + 1);
+        // ensure habitLogs normalized to YYYY-MM-DD strings
+        habitLogs = Array.isArray(res) ? res.map(l => ({
+            habit: l.habit || { id: l.habitId || l.habit?.id },
+            date: cleanDateStr(l.date || l.createdAt || l.loggedAt),
+            status: l.status || 'COMPLETED'
+        })) : [];
+        console.log('Loaded habit logs', habitLogs);
+    } catch (e) {
+        console.error('Failed to load habit logs', e);
+        habitLogs = [];
+    }
+}
+
+async function loadUserStats() {
+    try {
+        const stats = await apiService.getUserStats();
+        updateStatsDisplay(stats);
+    } catch (e) {
+        console.error('Failed to load user stats', e);
+    }
+}
+
+function updateStatsDisplay(stats = {}) {
+    document.getElementById('currentStreakStat').textContent = stats.currentStreak || 0;
+    document.getElementById('totalHabitsStat').textContent = stats.totalHabits || 0;
+
+    // handle completionRate being in fraction (0.12) or percent (12)
+    const completionRate = stats.completionRate == null ? 0 : stats.completionRate;
+    const displayRate = (completionRate <= 1 ? completionRate * 100 : completionRate);
+    document.getElementById('completionRateStat').textContent = Math.round(displayRate) + '%';
+
+    document.getElementById('bestStreakStat').textContent = stats.bestStreak || 0;
+}
+
+/* ---------- Demo fallback ---------- */
 function loadDemoData() {
     habits = [
-        { id: 1, title: 'Morning Exercise', description: '30 min workout', frequency: 'DAILY' },
-        { id: 2, title: 'Drink Water', description: '8 glasses daily', frequency: 'DAILY' },
-        { id: 3, title: 'Meditation', description: '10 min mindfulness', frequency: 'DAILY' }
+        { id: 1, title: 'Morning Exercise' },
+        { id: 2, title: 'Drink Water' },
+        { id: 3, title: 'Meditation' }
     ];
+    habitLogs = [];
     renderWeekView();
-    updateMonthView();
-    updateStatsSummary();
+    renderMonthView();
 }
 
-function setupEventListeners() {
-    // Tab navigation
-    document.querySelectorAll('.tab-btn').forEach(tab => {
-        tab.addEventListener('click', function() {
-            const tabName = this.getAttribute('data-tab');
-            showTab(tabName);
-        });
-    });
+/* ---------- UI Helpers ---------- */
 
-    // Logout
-    document.getElementById('logoutBtn').addEventListener('click', function() {
-        localStorage.removeItem('currentUser');
-        localStorage.removeItem('monthlyCompletions');
-        window.location.href = '/login.html';
-    });
+function showError(message) {
+    const el = document.createElement('div');
+    el.className = 'error-message';
+    el.style.cssText = 'position:fixed;top:20px;right:20px;background:#f44336;color:#fff;padding:12px 16px;border-radius:6px;z-index:9999';
+    el.textContent = message;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 3000);
 }
+// вставь эту функцию в analytics.js (например перед setupEventListeners или сразу после него)
 
+// Показывает вкладку: 'week' или 'month'
 function showTab(tabName) {
-    // Update active tab button
+    // кнопки табов
     document.querySelectorAll('.tab-btn').forEach(tab => {
-        tab.classList.remove('active');
+        tab.classList.toggle('active', tab.getAttribute('data-tab') === tabName);
     });
-    document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
 
-    // Show active tab content
+    // контент табов
     document.querySelectorAll('.tab-content').forEach(content => {
-        content.classList.remove('active');
+        content.classList.toggle('active', content.id === `${tabName}Tab`);
     });
-    document.getElementById(`${tabName}Tab`).classList.add('active');
 
-    // Load specific tab data
-    switch(tabName) {
-        case 'week':
-            renderWeekView();
-            break;
-        case 'month':
-            updateMonthView();
-            break;
+    // Если переключились на month — убедимся что данные загружены и отрендерим
+    if (tabName === 'month') {
+        // загрузим логи (без падения, если уже загружены) и отрендерим
+        loadHabitLogsForCurrentMonth()
+            .then(() => renderMonthView())
+            .catch(err => {
+                console.error('Ошибка при загрузке логов для месяца', err);
+                // всё равно попытаемся отрендерить (локальные данные)
+                renderMonthView();
+            });
+    } else if (tabName === 'week') {
+        // для недели просто рендер
+        renderWeekView();
     }
 }
 
-function updateStatsSummary() {
-    // Calculate stats from habits data
-    const totalHabits = habits.length;
-    const completionRate = calculateAverageCompletion();
-    const streak = calculateCurrentStreak();
-    const bestStreak = calculateBestStreak();
+/* ---------- Event listeners ---------- */
+function setupEventListeners() {
+    document.querySelectorAll('.tab-btn').forEach(tab => {
+        tab.addEventListener('click', () => showTab(tab.getAttribute('data-tab')));
+    });
 
-    // Update DOM
-    document.getElementById('currentStreakStat').textContent = streak;
-    document.getElementById('completionRateStat').textContent = completionRate + '%';
-    document.getElementById('totalHabitsStat').textContent = totalHabits;
-    document.getElementById('bestStreakStat').textContent = bestStreak;
-}
-
-function calculateAverageCompletion() {
-    const monthKey = `${currentYear}-${currentMonth}`;
-    const monthData = monthlyCompletions[monthKey] || {};
-    let totalCompletions = 0;
-    let totalPossible = 0;
-
-    for (const day in monthData) {
-        const dayCompletions = monthData[day];
-        totalCompletions += Object.values(dayCompletions).filter(Boolean).length;
-        totalPossible += habits.length;
+    // Logout (keep redirect to login for now)
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            localStorage.removeItem('currentUser');
+            window.location.href = '/login.html';
+        });
     }
 
-    return totalPossible > 0 ? Math.round((totalCompletions / totalPossible) * 100) : 0;
+    // Delegate change events for dynamically created checkboxes (week + month)
+    document.addEventListener('change', function (e) {
+        const target = e.target;
+        if (!target) return;
+
+        if (target.classList.contains('table-checkbox') || target.classList.contains('month-checkbox')) {
+            const habitId = parseInt(target.getAttribute('data-habit-id'), 10);
+            const dateStrRaw = target.getAttribute('data-date');
+            // Normalize date - if data-date already YYYY-MM-DD, keep it
+            const formattedDate = (typeof dateStrRaw === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateStrRaw))
+                ? dateStrRaw
+                : formatDateForAPI(dateStrRaw);
+            toggleHabitCompletion(habitId, formattedDate, target.checked);
+        }
+    });
 }
 
-function calculateCurrentStreak() {
-    // Simple streak calculation
-    // You can implement more sophisticated streak tracking
-    return 5; // Example value
+/* ---------- Week View ---------- */
+
+function getStartOfWeek(date) {
+    // Make Monday the first day of week
+    const d = new Date(date);
+    const day = (d.getDay() + 6) % 7; // 0..6 where 0 = Monday
+    d.setDate(d.getDate() - day);
+    d.setHours(0,0,0,0);
+    return d;
 }
 
-function calculateBestStreak() {
-    return 10; // Example value
-}
-
-// WEEK VIEW FUNCTIONS
 function renderWeekView() {
     const weekTableBody = document.getElementById('weekTableBody');
     if (!weekTableBody) return;
 
-    if (habits.length === 0) {
-        weekTableBody.innerHTML = `
-            <tr>
-                <td colspan="8" style="text-align: center; padding: 40px;">
-                    <i class="fas fa-clipboard-list" style="font-size: 48px; opacity: 0.5; margin-bottom: 16px;"></i>
-                    <p>No habits yet. Add habits in Daily Tracker!</p>
-                </td>
-            </tr>
-        `;
+    if (!habits || habits.length === 0) {
+        weekTableBody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px">No habits yet.</td></tr>`;
         return;
     }
 
+    const today = new Date();
+    const start = getStartOfWeek(today);
+    const weekDates = [];
+    for (let i = 0; i < 7; i++) {
+        const dt = new Date(start);
+        dt.setDate(start.getDate() + i);
+        weekDates.push(dt);
+    }
+
     weekTableBody.innerHTML = habits.map(habit => {
-        let cells = `<td>${habit.title}</td>`;
+        let cells = `<td>${escapeHtml(habit.title || '')}</td>`;
         for (let i = 0; i < 7; i++) {
-            const isCompleted = checkDayCompletion(habit.id, i);
-            cells += `
-                <td>
-                    <input type="checkbox" class="table-checkbox" 
-                           ${isCompleted ? 'checked' : ''}
-                           onchange="toggleWeekCompletion(${habit.id}, ${i})">
-                </td>`;
+            const date = weekDates[i];
+            const dateStr = formatDateForAPI(date);
+            const isCompleted = isHabitCompletedOnDate(habit.id, dateStr);
+            cells += `<td><input type="checkbox" class="table-checkbox" data-habit-id="${habit.id}" data-date="${dateStr}" ${isCompleted ? 'checked' : ''}></td>`;
         }
         return `<tr>${cells}</tr>`;
     }).join('');
 }
 
-function checkDayCompletion(habitId, dayOffset) {
-    // Check if habit was completed on specific day of current week
-    const today = new Date();
-    const targetDate = new Date(today);
-    targetDate.setDate(today.getDate() - today.getDay() + dayOffset);
+/* ---------- Month View ---------- */
 
-    const dateKey = `${targetDate.getFullYear()}-${targetDate.getMonth() + 1}-${targetDate.getDate()}`;
-    const monthKey = `${targetDate.getFullYear()}-${targetDate.getMonth()}`;
-    const day = targetDate.getDate();
+function renderMonthView() {
+    const monthTableHead = document.querySelector('#monthTable thead tr');
+    const monthTableBody = document.getElementById('monthTableBody');
+    if (!monthTableHead || !monthTableBody) return;
 
-    return monthlyCompletions[monthKey]?.[day]?.[habitId] || false;
-}
-
-function toggleWeekCompletion(habitId, dayOffset) {
-    const today = new Date();
-    const targetDate = new Date(today);
-    targetDate.setDate(today.getDate() - today.getDay() + dayOffset);
-
-    const dateStr = `${targetDate.getFullYear()}-${(targetDate.getMonth() + 1).toString().padStart(2, '0')}-${targetDate.getDate().toString().padStart(2, '0')}`;
-    const monthKey = `${targetDate.getFullYear()}-${targetDate.getMonth()}`;
-    const day = targetDate.getDate();
-
-    const currentStatus = checkDayCompletion(habitId, dayOffset);
-
-    if (currentStatus) {
-        // Remove completion
-        if (monthlyCompletions[monthKey] && monthlyCompletions[monthKey][day]) {
-            delete monthlyCompletions[monthKey][day][habitId];
-        }
-        apiService.deleteHabitLog(habitId, dateStr).catch(console.error);
-    } else {
-        // Add completion
-        if (!monthlyCompletions[monthKey]) monthlyCompletions[monthKey] = {};
-        if (!monthlyCompletions[monthKey][day]) monthlyCompletions[monthKey][day] = {};
-        monthlyCompletions[monthKey][day][habitId] = true;
-        apiService.saveHabitLog({
-            habitId: habitId,
-            date: dateStr,
-            status: 'COMPLETED'
-        }).catch(console.error);
+    if (!habits || habits.length === 0) {
+        monthTableBody.innerHTML = `<tr><td colspan="32" style="text-align:center;padding:40px">No habits yet.</td></tr>`;
+        return;
     }
 
-    saveMonthlyData();
-    updateStatsSummary();
-}
-
-// MONTH VIEW FUNCTIONS (copied from main.js)
-function initializeMonthlyData() {
-    const monthKey = `${currentYear}-${currentMonth}`;
-    if (!monthlyCompletions[monthKey]) {
-        monthlyCompletions[monthKey] = {};
-    }
-    saveMonthlyData();
-}
-
-function saveMonthlyData() {
-    localStorage.setItem('monthlyCompletions', JSON.stringify(monthlyCompletions));
-}
-
-async function loadHabitLogsForCurrentMonth() {
-    try {
-        const logs = await apiService.getHabitLogs(currentYear, currentMonth + 1);
-        const monthKey = `${currentYear}-${currentMonth}`;
-
-        logs.forEach(log => {
-            const date = new Date(log.date);
-            const day = date.getDate();
-
-            if (!monthlyCompletions[monthKey][day]) {
-                monthlyCompletions[monthKey][day] = {};
-            }
-            monthlyCompletions[monthKey][day][log.habit.id] = true;
-        });
-
-        saveMonthlyData();
-    } catch (error) {
-        console.error('Failed to load habit logs:', error);
-    }
-}
-
-function updateMonthView() {
-    updateCalendar();
-    updateCompletionGrid();
-    updateMonthlyStats();
-}
-
-function updateCalendar() {
-    const calendarGrid = document.getElementById('calendarGrid');
-    if (!calendarGrid) return;
-
-    const today = new Date();
-    const firstDay = new Date(currentYear, currentMonth, 1).getDay();
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
 
-    let startDay = firstDay === 0 ? 6 : firstDay - 1;
-    calendarGrid.innerHTML = '';
-
-    // Empty days at start
-    for (let i = 0; i < startDay; i++) {
-        const emptyDay = document.createElement('div');
-        emptyDay.className = 'calendar-day empty';
-        calendarGrid.appendChild(emptyDay);
-    }
-
-    // Calendar days
-    const monthKey = `${currentYear}-${currentMonth}`;
+    // Build header
+    monthTableHead.innerHTML = '<th>Habits</th>';
     for (let day = 1; day <= daysInMonth; day++) {
-        const dayElement = document.createElement('div');
-        dayElement.className = 'calendar-day current-month';
-        dayElement.innerHTML = `<div class="day-number">${day}</div>`;
-
-        const dayCompletions = monthlyCompletions[monthKey]?.[day] || {};
-        const completedCount = Object.values(dayCompletions).filter(Boolean).length;
-        const totalHabits = habits.length;
-
-        if (completedCount > 0) {
-            if (completedCount === totalHabits && totalHabits > 0) {
-                dayElement.classList.add('completed');
-            } else {
-                dayElement.classList.add('partial');
-            }
-            dayElement.innerHTML += `<div class="completion-count">${completedCount}/${totalHabits}</div>`;
-        }
-
-        // Highlight today
-        if (today.getDate() === day && today.getMonth() === currentMonth && today.getFullYear() === currentYear) {
-            dayElement.classList.add('today');
-        }
-
-        dayElement.addEventListener('click', () => {
-            toggleDayCompletion(day);
-        });
-
-        calendarGrid.appendChild(dayElement);
+        const date = new Date(currentYear, currentMonth, day);
+        const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+        monthTableHead.innerHTML += `<th title="${date.toDateString()}">${day}<br><small>${dayName}</small></th>`;
     }
+
+    // Build body rows
+    monthTableBody.innerHTML = habits.map(habit => {
+        let row = `<td>${escapeHtml(habit.title || '')}</td>`;
+        for (let day = 1; day <= daysInMonth; day++) {
+            const date = new Date(currentYear, currentMonth, day);
+            const dateStr = formatDateForAPI(date);
+            const isCompleted = isHabitCompletedOnDate(habit.id, dateStr);
+            row += `<td><input type="checkbox" class="month-checkbox" data-habit-id="${habit.id}" data-date="${dateStr}" ${isCompleted ? 'checked' : ''}></td>`;
+        }
+        return `<tr>${row}</tr>`;
+    }).join('');
+    // Update month label
+    document.getElementById('currentMonthYear').textContent =
+        new Date(currentYear, currentMonth).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 }
 
-function updateCompletionGrid() {
-    const completionGrid = document.getElementById('completionGrid');
-    if (!completionGrid) return;
+/* ---------- Utilities ---------- */
 
-    completionGrid.innerHTML = '';
-    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-    const monthKey = `${currentYear}-${currentMonth}`;
+function isHabitCompletedOnDate(habitId, dateInput) {
+    const dateStr = formatDateForAPI(dateInput);
+    if (!dateStr) return false;
+    return habitLogs.some(log =>
+        log.habit &&
+        Number(log.habit.id) === Number(habitId) &&
+        cleanDateStr(log.date) === dateStr &&
+        (log.status || '').toUpperCase() === 'COMPLETED'
+    );
+}
 
-    // Header row
-    const headerRow = document.createElement('div');
-    headerRow.className = 'completion-header';
-    headerRow.textContent = 'Habits/Days';
-    completionGrid.appendChild(headerRow);
-
-    for (let day = 1; day <= 31; day++) {
-        const dayHeader = document.createElement('div');
-        dayHeader.className = `completion-header ${day > daysInMonth ? 'empty' : ''}`;
-        dayHeader.textContent = day > daysInMonth ? '' : day;
-        completionGrid.appendChild(dayHeader);
-    }
-
-    // Habits rows
-    habits.forEach(habit => {
-        const habitName = document.createElement('div');
-        habitName.className = 'completion-habit-name';
-        habitName.textContent = habit.title;
-        completionGrid.appendChild(habitName);
-
-        for (let day = 1; day <= 31; day++) {
-            const dayCell = document.createElement('div');
-
-            if (day > daysInMonth) {
-                dayCell.className = 'completion-day empty';
-            } else {
-                const isCompleted = monthlyCompletions[monthKey]?.[day]?.[habit.id] || false;
-                dayCell.className = `completion-day ${isCompleted ? 'completed' : ''}`;
-                dayCell.innerHTML = `
-                    <div class="day-number">${day}</div>
-                    <div class="habit-status">${isCompleted ? '✓' : '○'}</div>
-                `;
-
-                dayCell.addEventListener('click', () => {
-                    toggleHabitDayCompletion(habit.id, day);
-                });
-            }
-
-            completionGrid.appendChild(dayCell);
-        }
+function escapeHtml(text) {
+    if (!text) return '';
+    return text.replace(/[&<>"']/g, function (m) {
+        return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m];
     });
 }
 
-async function toggleHabitDayCompletion(habitId, day) {
-    const monthKey = `${currentYear}-${currentMonth}`;
-    const date = `${currentYear}-${(currentMonth + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+/* ---------- Toggle habit completion (save / delete) ---------- */
 
-    if (!monthlyCompletions[monthKey][day]) {
-        monthlyCompletions[monthKey][day] = {};
-    }
-
-    const currentStatus = monthlyCompletions[monthKey][day][habitId];
-    const newStatus = !currentStatus;
-
+async function toggleHabitCompletion(habitId, dateStr, completed) {
     try {
-        if (newStatus) {
+        // dateStr expected in YYYY-MM-DD already
+        const formattedDate = formatDateForAPI(dateStr);
+        if (!formattedDate) throw new Error('Invalid date');
+
+        if (completed) {
+            // create
             await apiService.saveHabitLog({
                 habitId: habitId,
-                date: date,
+                date: formattedDate,
                 status: 'COMPLETED'
             });
-        } else {
-            await apiService.deleteHabitLog(habitId, date);
-        }
-
-        monthlyCompletions[monthKey][day][habitId] = newStatus;
-        saveMonthlyData();
-        updateMonthView();
-        updateStatsSummary();
-
-    } catch (error) {
-        console.error('Failed to update habit log:', error);
-        showError('Failed to update habit completion. Please try again.');
-    }
-}
-
-async function toggleDayCompletion(day) {
-    const monthKey = `${currentYear}-${currentMonth}`;
-    if (!monthlyCompletions[monthKey][day]) {
-        monthlyCompletions[monthKey][day] = {};
-    }
-
-    const dayCompletions = monthlyCompletions[monthKey][day];
-    const allCompleted = habits.every(habit => dayCompletions[habit.id]);
-
-    for (const habit of habits) {
-        const shouldComplete = !allCompleted;
-        if (shouldComplete !== dayCompletions[habit.id]) {
-            await toggleHabitDayCompletion(habit.id, day);
-        }
-    }
-}
-
-function updateMonthlyStats() {
-    const monthKey = `${currentYear}-${currentMonth}`;
-    const monthData = monthlyCompletions[monthKey] || {};
-    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-
-    let totalCompletions = 0;
-    let totalPossible = habits.length * daysInMonth;
-    let currentStreak = 0;
-    let bestStreak = 0;
-    let tempStreak = 0;
-
-    const today = new Date();
-    const currentDay = today.getDate();
-
-    for (let day = 1; day <= daysInMonth; day++) {
-        const dayCompletions = monthData[day] || {};
-        const completedCount = Object.values(dayCompletions).filter(Boolean).length;
-        const totalHabits = habits.length;
-
-        totalCompletions += completedCount;
-
-        if (completedCount === totalHabits && totalHabits > 0) {
-            tempStreak++;
-            if (day <= currentDay) {
-                currentStreak = tempStreak;
+            // push to local logs (avoid duplicates)
+            const exists = habitLogs.some(l => Number(l.habit.id) === Number(habitId) && cleanDateStr(l.date) === formattedDate);
+            if (!exists) {
+                habitLogs.push({ habit: { id: habitId }, date: formattedDate, status: 'COMPLETED' });
             }
-            bestStreak = Math.max(bestStreak, tempStreak);
         } else {
-            tempStreak = 0;
+            // delete
+            await apiService.deleteHabitLog(habitId, formattedDate);
+            const index = habitLogs.findIndex(l => Number(l.habit.id) === Number(habitId) && cleanDateStr(l.date) === formattedDate);
+            if (index > -1) habitLogs.splice(index, 1);
         }
-    }
 
-    const completionRate = totalPossible > 0 ? Math.round((totalCompletions / totalPossible) * 100) : 0;
+        // Update stats & views
+        await loadUserStats();
+        if (document.querySelector('[data-tab="week"]').classList.contains('active')) renderWeekView();
+        if (document.querySelector('[data-tab="month"]').classList.contains('active')) renderMonthView();
 
-    document.getElementById('monthCurrentStreak').textContent = currentStreak;
-    document.getElementById('monthBestStreak').textContent = bestStreak;
-    document.getElementById('monthCompletionRate').textContent = completionRate + '%';
-    document.getElementById('currentMonthYear').textContent =
-        new Date(currentYear, currentMonth).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-
-    if (currentStreak >= 7) {
-        document.getElementById('monthCurrentStreak').classList.add('streak-high');
-    } else {
-        document.getElementById('monthCurrentStreak').classList.remove('streak-high');
+    } catch (err) {
+        console.error('toggleHabitCompletion failed', err);
+        showError('Failed to update habit: ' + (err.message || err));
+        // revert checkbox UI (best-effort)
+        const selector = `.table-checkbox[data-habit-id="${habitId}"][data-date="${dateStr}"], .month-checkbox[data-habit-id="${habitId}"][data-date="${dateStr}"]`;
+        const cb = document.querySelector(selector);
+        if (cb) cb.checked = !completed;
     }
 }
 
-function changeMonth(direction) {
+/* ---------- Month navigation ---------- */
+
+async function changeMonth(direction) {
     currentMonth += direction;
+    if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+    if (currentMonth < 0) { currentMonth = 11; currentYear--; }
 
-    if (currentMonth > 11) {
-        currentMonth = 0;
-        currentYear++;
-    } else if (currentMonth < 0) {
-        currentMonth = 11;
-        currentYear--;
-    }
-
-    initializeMonthlyData();
-    updateMonthView();
+    await loadHabitLogsForCurrentMonth();
+    renderMonthView();
+    await loadUserStats();
 }
 
-function showError(message) {
-    alert('Error: ' + message);
-}
-
-// Make functions global
+/* Expose changeMonth for inline HTML handlers */
 window.changeMonth = changeMonth;
-window.toggleDayCompletion = toggleDayCompletion;
-window.toggleHabitDayCompletion = toggleHabitDayCompletion;
-window.toggleWeekCompletion = toggleWeekCompletion;

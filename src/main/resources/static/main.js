@@ -176,7 +176,7 @@ function setupEventListeners() {
     // Logout
     document.getElementById('logoutBtn').addEventListener('click', function() {
         localStorage.removeItem('currentUser');
-        window.location.href = '/login.html';
+        window.location.href = '/';
     });
     // Handle browser back/forward buttons
     window.addEventListener('popstate', function(event) {

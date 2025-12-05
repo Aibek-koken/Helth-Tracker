@@ -10,7 +10,7 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addViewControllers(ViewControllerRegistry registry) {
         // Redirect root to login page
-        registry.addViewController("/").setViewName("forward:/login.html");
+        registry.addViewController("/").setViewName("forward:/landing.html");
 
         // For SPA routing - redirect to index.html
         registry.addViewController("/main").setViewName("forward:/main.html");

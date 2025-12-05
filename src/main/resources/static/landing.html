@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HealthTracker – Build Healthy Habits</title>
+
+    <link rel="stylesheet" href="/main.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background: var(--background);
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 100px 40px;
+            text-align: center;
+            max-width: 900px;
+            margin: 50px auto;
+        }
+
+        .hero-title {
+            font-size: 52px;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            letter-spacing: -1px;
+        }
+
+        .hero-highlight {
+            color: var(--primary);
+        }
+
+        .hero-subtitle {
+            font-size: 20px;
+            color: var(--text-secondary);
+            margin-bottom: 35px;
+            max-width: 650px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cta-btn {
+            padding: 16px 36px;
+            background: var(--primary);
+            color: white;
+            border-radius: 12px;
+            font-size: 20px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: 0.25s;
+        }
+
+        .cta-btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-3px);
+        }
+
+        /* Screenshot mockup */
+        .mockup {
+            max-width: 1000px;
+            margin: 60px auto;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+        }
+
+        /* Features */
+        .section-title {
+            text-align: center;
+            font-size: 34px;
+            font-weight: 700;
+            margin-top: 80px;
+            margin-bottom: 30px;
+        }
+
+        .features {
+            max-width: 1100px;
+            margin: 0 auto 80px auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 30px;
+        }
+
+        .feature-card {
+            padding: 32px;
+            background: var(--surface);
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            transition: 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .feature-card i {
+            font-size: 40px;
+            color: var(--primary);
+            margin-bottom: 14px;
+        }
+
+        .feature-card p {
+            color: var(--text-secondary);
+            margin-top: 8px;
+        }
+
+        /* Social proof */
+        .social-proof {
+            text-align: center;
+            margin: 80px auto;
+            max-width: 700px;
+        }
+
+        .quote {
+            font-size: 22px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 15px;
+        }
+
+        .quote-author {
+            color: var(--text-secondary);
+            font-size: 16px;
+        }
+
+        /* Footer */
+        footer {
+            margin-top: 100px;
+            padding: 40px;
+            text-align: center;
+            color: var(--text-secondary);
+        }
+
+        .header-nav {
+            display: flex;
+            justify-content: space-between;
+            padding: 20px 40px;
+            background: var(--surface);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-links a {
+            margin-left: 20px;
+            font-weight: 600;
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .header-links a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+
+<header class="header-nav">
+    <div class="logo"><i class="fas fa-heartbeat"></i> HealthTracker</div>
+    <div class="header-links">
+        <a href="/login.html">Login</a>
+        <a href="/signup.html">Sign Up</a>
+    </div>
+</header>
+
+<section class="hero">
+    <h1 class="hero-title">
+        Build <span class="hero-highlight">Healthy Habits</span>.
+        Improve Your Life.
+    </h1>
+
+    <p class="hero-subtitle">
+        A clean, modern, science-based habit tracker that helps you stay consistent, boost productivity, and unlock a better version of yourself.
+    </p>
+
+    <a href="/signup.html" class="cta-btn">Start Free</a>
+
+    <div class="mockup">
+        <img src="/tracker_screenshot.png" alt="App Screenshot">
+    </div>
+</section>
+
+<h2 class="section-title">Why Thousands Choose HealthTracker</h2>
+
+<section class="features">
+    <div class="feature-card">
+        <i class="fas fa-list-check"></i>
+        <h3>Daily Habit Management</h3>
+        <p>Create habits, track progress, and stay motivated with simple UI.</p>
+    </div>
+
+    <div class="feature-card">
+        <i class="fas fa-fire"></i>
+        <h3>Streak System</h3>
+        <p>Stay consistent and earn streaks that keep you accountable.</p>
+    </div>
+
+    <div class="feature-card">
+        <i class="fas fa-chart-line"></i>
+        <h3>Smart Analytics</h3>
+        <p>Understand your progress with detailed charts and insights.</p>
+    </div>
+
+    <div class="feature-card">
+        <i class="fas fa-users"></i>
+        <h3>Community Hub</h3>
+        <p>Share progress, ask questions, and stay inspired by others.</p>
+    </div>
+
+    <div class="feature-card">
+        <i class="fas fa-lock"></i>
+        <h3>Private & Secure</h3>
+        <p>Your data is safely stored and never shared with third parties.</p>
+    </div>
+</section>
+
+<section class="social-proof">
+    <p class="quote">“HealthTracker completely changed my daily routine. I became more disciplined, confident, and productive.”</p>
+    <p class="quote-author">— Aibek, HealthTracker User</p>
+</section>
+
+<footer>
+    © 2025 HealthTracker · All Rights Reserved
+</footer>
+
+</body>
+</html>

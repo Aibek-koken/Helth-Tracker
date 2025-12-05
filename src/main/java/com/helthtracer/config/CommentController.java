@@ -1,4 +1,4 @@
-package com.helthtracer.controller;
+package com.helthtracer.config;
 
 import com.helthtracer.model.Comment;
 import com.helthtracer.model.Post;

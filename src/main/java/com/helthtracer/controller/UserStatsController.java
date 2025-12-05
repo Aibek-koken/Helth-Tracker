@@ -36,9 +36,10 @@ public class UserStatsController {
         int completedThisMonth = habitLogRepository.countCompletedHabitsThisMonth(userId, startOfMonth, endOfMonth);
         int totalPossible = totalHabits * LocalDate.now().lengthOfMonth();
         double completionRate = totalPossible > 0 ? (double) completedThisMonth / totalPossible * 100 : 0;
-
         // Sleep statistics
-        double averageSleep = sleepSessionRepository.findAverageSleepDurationByUserId(userId);
+        Double avgSleep = sleepSessionRepository.findAverageSleepDurationByUserId(userId);
+        double averageSleep = avgSleep != null ? avgSleep : 0.0;
+
 
         stats.put("totalHabits", totalHabits);
         stats.put("completedThisMonth", completedThisMonth);
