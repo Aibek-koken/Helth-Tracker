@@ -3,6 +3,8 @@ package com.helthtracer.repository;
 import com.helthtracer.model.HabitLog;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.Modifying;       // ← добавлено
+import org.springframework.transaction.annotation.Transactional; // ← добавлено
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
@@ -15,7 +17,6 @@ public interface HabitLogRepository extends JpaRepository<HabitLog, Long> {
                                       @Param("start") LocalDate start,
                                       @Param("end") LocalDate end);
 
-    // ИСПРАВИТЬ сигнатуру метода - добавить @Param
     @Query("SELECT hl FROM HabitLog hl WHERE hl.habit.user.id = :userId AND hl.date BETWEEN :startDate AND :endDate")
     List<HabitLog> findByHabitUserIdAndDateBetween(@Param("userId") Long userId,
                                                    @Param("startDate") LocalDate startDate,
@@ -23,5 +24,8 @@ public interface HabitLogRepository extends JpaRepository<HabitLog, Long> {
 
     List<HabitLog> findByHabitIdAndDate(Long habitId, LocalDate date);
 
+    // ✔ ИСПРАВЛЕНО — нужно @Modifying + @Transactional
+    @Modifying
+    @Transactional
     void deleteByHabitIdAndDate(Long habitId, LocalDate date);
 }
