@@ -77,6 +77,33 @@ const apiService = {
         return await response.json();
     },
 
+    // --- INSERTED: habit-log APIs (minimal, same contract as analytics.js) ---
+    // сохраняет лог выполнения привычки на дату (POST /api/habit-logs)
+    async saveHabitLog(habitId, dateStr) {
+        return this.request('/habit-logs', {
+            method: 'POST',
+            body: JSON.stringify({
+                habitId: habitId,
+                date: dateStr,
+                status: 'COMPLETED'
+            })
+        });
+    },
+
+    // удаляет лог выполнения (DELETE /api/habit-logs?habit_id=...&date=...)
+    async deleteHabitLog(habitId, dateStr) {
+        return this.request(`/habit-logs?habit_id=${habitId}&date=${dateStr}`, {
+            method: 'DELETE'
+        });
+    },
+
+    // получить логи привычек пользователя за месяц (используется для определения, что выполнено сегодня)
+    async getHabitLogs(year, month) {
+        if (!currentUser || !currentUser.id) throw new Error('User not authenticated');
+        return this.request(`/habit-logs?user_id=${currentUser.id}&year=${year}&month=${month}`);
+    },
+    // --- END inserted ---
+
     async test() {
         return this.request('/test');
     }
@@ -127,6 +154,31 @@ async function initializeApp() {
 async function loadHabits() {
     try {
         habits = await apiService.getHabits();
+
+        // --- NEW: дополнение: подгружаем логи за текущий месяц и помечаем, что выполнено сегодня ---
+        try {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = today.getMonth() + 1; // backend month 1-based
+            const logs = await apiService.getHabitLogs(year, month);
+            // logs — массив объектов HabitLog. Отбираем записи за сегодня и статус COMPLETED
+            const todayStr = today.toISOString().split('T')[0];
+            if (Array.isArray(logs)) {
+                logs.forEach(l => {
+                    // l.date может быть "YYYY-MM-DD" или "YYYY-MM-DDT..."
+                    const logDate = (l.date || l.createdAt || l.loggedAt || '').split('T')[0];
+                    const habitId = Number(l.habit?.id ?? l.habitId ?? l.habit ?? 0);
+                    const status = (l.status || '').toUpperCase();
+                    if (logDate === todayStr && status === 'COMPLETED' && habitId) {
+                        completedHabits.add(habitId);
+                    }
+                });
+            }
+        } catch (e) {
+            console.warn('Failed to load habit logs for today (fallback to client state)', e);
+        }
+        // --- END new block ---
+
         renderTodayView();
         updateProgress();
         updateStats();
@@ -303,15 +355,42 @@ function updateStats() {
     document.getElementById('currentStreak').textContent = streak;
 }
 
-function toggleHabitCompletion(habitId) {
-    if (completedHabits.has(habitId)) {
-        completedHabits.delete(habitId);
-    } else {
-        completedHabits.add(habitId);
+// --- REPLACED: toggleHabitCompletion now calls backend to save/delete habit logs ---
+async function toggleHabitCompletion(habitId) {
+    const today = new Date();
+    const dateStr = today.toISOString().split('T')[0];
+
+    const already = completedHabits.has(habitId);
+
+    // Оптимистично переключаем UI (чтобы чекбокс визуально реагировал быстро)
+    const checkbox = document.querySelector(`.habit-item[data-habit-id="${habitId}"] .habit-checkbox`);
+    if (checkbox) checkbox.disabled = true;
+
+    try {
+        if (already) {
+            // удаляем лог на сервере
+            await apiService.deleteHabitLog(habitId, dateStr);
+            completedHabits.delete(habitId);
+        } else {
+            // сохраняем лог на сервере
+            await apiService.saveHabitLog(habitId, dateStr);
+            completedHabits.add(habitId);
+        }
+
+        // Обновляем UI
+        if (checkbox) checkbox.checked = !already;
+        updateProgress();
+        updateStats();
+    } catch (err) {
+        console.error('toggleHabitCompletion failed', err);
+        // откатываем визуально
+        if (checkbox) checkbox.checked = already;
+        showError(err.message || 'Failed to update habit status');
+    } finally {
+        if (checkbox) checkbox.disabled = false;
     }
-    updateProgress();
-    updateStats();
 }
+// --- END replaced function ---
 
 async function deleteHabit(habitId) {
     console.log('Deleting habit:', habitId);
