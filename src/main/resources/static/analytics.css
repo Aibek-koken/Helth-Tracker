@@ -1,0 +1,406 @@
+/* Analytics Page Specific Styles */
+
+.analytics-container {
+    padding: 30px 40px;
+}
+
+.analytics-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 10px;
+}
+
+.tab-btn {
+    padding: 12px 24px;
+    background: none;
+    border: none;
+    font-size: 16px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: 8px 8px 0 0;
+    transition: all 0.3s ease;
+}
+
+.tab-btn:hover {
+    color: var(--primary);
+    background: var(--background);
+}
+
+.tab-btn.active {
+    color: var(--primary);
+    background: var(--primary-light);
+    font-weight: 600;
+}
+
+.tab-content {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.stats-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.summary-card {
+    background: var(--surface);
+    padding: 24px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    text-align: center;
+    transition: transform 0.3s ease;
+}
+
+.summary-card:hover {
+    transform: translateY(-2px);
+}
+
+.summary-value {
+    font-size: 32px;
+    font-weight: bold;
+    color: var(--primary);
+    margin-bottom: 8px;
+}
+
+.summary-label {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+/* Monthly Stats */
+.monthly-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.month-stat-card {
+    background: var(--surface);
+    padding: 20px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.month-stat-icon {
+    font-size: 24px;
+    color: var(--primary);
+}
+
+.month-stat-value {
+    font-size: 28px;
+    font-weight: bold;
+    color: var(--text-primary);
+}
+
+.month-stat-label {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.streak-high {
+    color: #ff6b6b !important;
+}
+
+/* Month Main Content Layout */
+.month-main-content {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 30px;
+    align-items: start;
+    margin-bottom: 30px;
+}
+
+/* Completion Grid (Left side) */
+.completion-section {
+    background: var(--surface);
+    padding: 24px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+/* Completion Grid Styles */
+.completion-grid {
+    display: grid;
+    grid-template-columns: 200px repeat(31, 1fr);
+    gap: 2px;
+    overflow-x: auto;
+    max-width: 100%;
+}
+
+.completion-header {
+    padding: 12px 8px;
+    background: var(--primary);
+    color: white;
+    text-align: center;
+    font-weight: bold;
+    border-radius: 4px;
+    font-size: 12px;
+    position: sticky;
+    left: 0;
+    z-index: 2;
+}
+
+.completion-header.empty {
+    background: transparent;
+    visibility: hidden;
+}
+
+.completion-habit-name {
+    padding: 12px 8px;
+    background: var(--background);
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    border: 1px solid var(--border);
+}
+
+.completion-day {
+    aspect-ratio: 1;
+    padding: 4px;
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 30px;
+    font-size: 10px;
+}
+
+.completion-day:hover {
+    background: var(--primary-light);
+    transform: scale(1.05);
+}
+
+.completion-day.empty {
+    background: transparent;
+    border: none;
+    cursor: default;
+}
+
+.completion-day.completed {
+    background: var(--success);
+    color: white;
+}
+
+.completion-day .day-number {
+    font-size: 8px;
+    font-weight: bold;
+    margin-bottom: 1px;
+}
+
+.completion-day .habit-status {
+    font-size: 10px;
+    font-weight: bold;
+}
+
+/* Для контейнера календарной секции: */
+.calendar-section {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+/* Для контейнера календаря добавим: */
+.calendar-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+.calendar-header {
+    flex-shrink: 0; /* Заголовок не сжимается */
+}
+
+.week-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-bottom: 8px;
+}
+
+.week-day {
+    text-align: center;
+    font-weight: bold;
+    color: var(--text-primary);
+    padding: 8px 4px;
+    background: var(--primary-light);
+    border-radius: 4px;
+    font-size: 11px;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    grid-template-rows: repeat(6, 1fr); /* Фиксируем 6 строк */
+    gap: 4px;
+    aspect-ratio: 7/6; /* Сохраняем пропорции 7:6 для календаря */
+    min-height: auto; /* Убираем min-height */
+    height: 100%; /* Занимает всю доступную высоту */
+}
+
+.calendar-day {
+    min-height: 0; /* Сбрасываем минимальную высоту */
+    height: 100%; /* Занимает всю высоту ячейки */
+    padding: 2px; /* Уменьшаем padding */
+    font-size: 11px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.calendar-day:hover {
+    background: var(--primary-light);
+}
+
+.calendar-day.empty {
+    background: transparent;
+    border: none;
+    cursor: default;
+}
+
+.calendar-day.today {
+    border: 2px solid var(--primary);
+    font-weight: bold;
+}
+
+.calendar-day.completed {
+    background: var(--success);
+    color: white;
+}
+
+.calendar-day.partial {
+    background: var(--warning);
+    color: white;
+}
+
+.calendar-day .day-number {
+    font-size: 12px;
+    font-weight: bold;
+    margin-bottom: 1px;
+    line-height: 1;
+}
+.calendar-section .calendar-container {
+    flex-grow: 1; /* Занимает оставшееся пространство */
+    min-height: 0; /* Позволяет сжиматься */
+}
+
+
+.calendar-day .completion-count {
+    font-size: 9px;
+    opacity: 0.8;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+/* Scrollbar for completion grid */
+.completion-grid::-webkit-scrollbar {
+    height: 8px;
+}
+
+.completion-grid::-webkit-scrollbar-track {
+    background: var(--background);
+    border-radius: 4px;
+}
+
+.completion-grid::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 4px;
+}
+
+.completion-grid::-webkit-scrollbar-thumb:hover {
+    background: var(--text-light);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .month-main-content {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .calendar-section {
+        position: static;
+        order: -1;
+    }
+}
+
+@media (max-width: 768px) {
+    .analytics-container {
+        padding: 20px;
+    }
+
+    .analytics-tabs {
+        flex-direction: column;
+    }
+
+    .tab-btn {
+        border-radius: 8px;
+        margin-bottom: 5px;
+    }
+
+    .stats-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .month-main-content {
+        grid-template-columns: 1fr;
+    }
+
+    .completion-grid {
+        grid-template-columns: 150px repeat(31, 1fr);
+    }
+
+    .completion-habit-name {
+        font-size: 10px;
+        padding: 8px 4px;
+    }
+
+    .completion-day {
+        min-width: 25px;
+    }
+}
+
+/* Обновляем медиа-запросы для мобильных устройств */
+@media (max-width: 768px) {
+    .calendar-grid {
+        aspect-ratio: 7/5; /* Меньшая пропорция на мобильных */
+        min-height: 250px;
+    }
+
+    .calendar-day .day-number {
+        font-size: 10px;
+    }
+
+    .calendar-day .completion-count {
+        font-size: 7px;
+    }
+}

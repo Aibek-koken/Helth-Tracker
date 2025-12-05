@@ -938,33 +938,6 @@ body {
     left: 70%;
 }
 
-.timeline-hours {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 10px;
-    font-size: 12px;
-    color: var(--text-light);
-}
-
-.save-sleep-btn {
-    padding: 12px 24px;
-    background: var(--primary);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: 600;
-    transition: background 0.3s ease;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 20px;
-}
-
-.save-sleep-btn:hover {
-    background: var(--primary-hover);
-}
 
 /* Streak animation */
 .streak-high {

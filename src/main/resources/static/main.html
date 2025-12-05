@@ -19,6 +19,10 @@
             <i class="fas fa-chart-line"></i>
             Tracker
         </button>
+        <button class="nav-item" onclick="window.location.href='analytics.html'">
+            <i class="fas fa-chart-bar"></i>
+            Analytics
+        </button>
         <button class="nav-item" data-page="posts">
             <i class="fas fa-users"></i>
             Community
@@ -94,29 +98,8 @@
             </div>
         </div>
 
-        <!-- View Selector -->
-        <div class="dropdown-container">
-            <div style="position: relative;">
-                <button class="dropdown-button" id="dropdownButton">
-                    <i class="fas fa-calendar-alt"></i>
-                    Today
-                </button>
-                <div class="dropdown-menu" id="dropdownMenu">
-                    <button class="dropdown-item" data-view="today">
-                        <i class="fas fa-sun"></i> Today
-                    </button>
-                    <button class="dropdown-item" data-view="week">
-                        <i class="fas fa-calendar-week"></i> This Week
-                    </button>
-                    <button class="dropdown-item" data-view="month">
-                        <i class="fas fa-calendar"></i> This Month
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Today View -->
-        <div class="today-container view-container active" id="todayView">
+        <!-- Today View (единственный вид) -->
+        <div class="today-container">
             <div class="habits-container">
                 <div class="section-header">
                     <h3><i class="fas fa-tasks"></i> Today's Habits</h3>
@@ -158,157 +141,6 @@
                     </div>
                 </div>
             </div>
-        </div>
-
-        <!-- Week Table -->
-        <div class="week-table-container view-container" id="weekView">
-            <div class="section-header">
-                <h3><i class="fas fa-calendar-week"></i> Weekly Overview</h3>
-            </div>
-            <table class="habits-table" id="weekTable">
-                <thead>
-                <tr>
-                    <th>Habits</th>
-                    <th>Mon</th>
-                    <th>Tue</th>
-                    <th>Wed</th>
-                    <th>Thu</th>
-                    <th>Fri</th>
-                    <th>Sat</th>
-                    <th>Sun</th>
-                </tr>
-                </thead>
-                <tbody id="weekTableBody">
-                <!-- Rows will be added dynamically -->
-                </tbody>
-            </table>
-        </div>
-        <!-- Month View -->
-        <div class="month-container view-container" id="monthView">
-            <div class="section-header">
-                <h3><i class="fas fa-calendar"></i> Monthly Overview - <span id="currentMonthYear">November 2024</span></h3>
-                <div class="month-navigation">
-                    <button class="btn-secondary" onclick="changeMonth(-1)">
-                        <i class="fas fa-chevron-left"></i> Prev
-                    </button>
-                    <button class="btn-secondary" onclick="changeMonth(1)">
-                        Next <i class="fas fa-chevron-right"></i>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Monthly Stats -->
-            <div class="monthly-stats">
-                <div class="month-stat-card">
-                    <div class="month-stat-icon">
-                        <i class="fas fa-fire"></i>
-                    </div>
-                    <div class="month-stat-info">
-                        <div class="month-stat-value" id="monthCurrentStreak">0</div>
-                        <div class="month-stat-label">Current Streak</div>
-                    </div>
-                </div>
-                <div class="month-stat-card">
-                    <div class="month-stat-icon">
-                        <i class="fas fa-trophy"></i>
-                    </div>
-                    <div class="month-stat-info">
-                        <div class="month-stat-value" id="monthBestStreak">0</div>
-                        <div class="month-stat-label">Best Streak</div>
-                    </div>
-                </div>
-                <div class="month-stat-card">
-                    <div class="month-stat-icon">
-                        <i class="fas fa-check-circle"></i>
-                    </div>
-                    <div class="month-stat-info">
-                        <div class="month-stat-value" id="monthCompletionRate">0%</div>
-                        <div class="month-stat-label">Completion Rate</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Main Month Content -->
-            <div class="month-main-content">
-                <!-- Habits Completion Table (Left) -->
-                <div class="completion-section">
-                    <div class="section-header">
-                        <h3><i class="fas fa-list-check"></i> Daily Completion</h3>
-                    </div>
-                    <div class="completion-grid" id="completionGrid">
-                        <!-- Completion grid will be generated here -->
-                    </div>
-                </div>
-
-                <!-- Calendar (Right) -->
-                <div class="calendar-section">
-                    <div class="calendar-container">
-                        <div class="calendar-header">
-                            <div class="week-days">
-                                <div class="week-day">Mon</div>
-                                <div class="week-day">Tue</div>
-                                <div class="week-day">Wed</div>
-                                <div class="week-day">Thu</div>
-                                <div class="week-day">Fri</div>
-                                <div class="week-day">Sat</div>
-                                <div class="week-day">Sun</div>
-                            </div>
-                        </div>
-                        <div class="calendar-grid" id="calendarGrid">
-                            <!-- Calendar days will be generated here -->
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Sleep Timeline -->
-        <div class="sleep-timeline">
-            <div class="section-header">
-                <h3><i class="fas fa-moon"></i> Sleep Tracking</h3>
-            </div>
-            <div class="sleep-display">
-                <div class="sleep-time">
-                    <div class="time-box">
-                        <label>Bedtime</label>
-                        <div class="time-value" id="bedtime">22:00</div>
-                    </div>
-                    <div class="time-separator">
-                        <i class="fas fa-moon"></i>
-                    </div>
-                    <div class="time-box">
-                        <label>Wake up</label>
-                        <div class="time-value" id="waketime">07:00</div>
-                    </div>
-                </div>
-                <div class="sleep-duration">
-                    <span id="sleepDuration">9h 0m</span>
-                    <span>sleep</span>
-                </div>
-            </div>
-            <div class="timeline-container" id="timeline">
-                <div class="timeline-labels">
-                    <span>20:00</span>
-                    <span>00:00</span>
-                    <span>04:00</span>
-                    <span>08:00</span>
-                </div>
-                <div class="timeline-track" id="timelineTrack">
-                    <div class="timeline-selection" id="timelineSelection"></div>
-                    <div class="timeline-handle start-handle" id="startHandle"></div>
-                    <div class="timeline-handle end-handle" id="endHandle"></div>
-                </div>
-            </div>
-            <div class="timeline-hours">
-                <span>00:00</span>
-                <span>06:00</span>
-                <span>12:00</span>
-                <span>18:00</span>
-                <span>23:59</span>
-            </div>
-            <button class="save-sleep-btn" id="saveSleepBtn">
-                <i class="fas fa-save"></i> Save Sleep Time
-            </button>
         </div>
     </div>
 
